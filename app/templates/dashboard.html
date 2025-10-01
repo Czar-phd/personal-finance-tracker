@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ "%04d-%02d"|format(year, month) }}{% endblock %}
+{% block content %}
+
+<section class="kpis">
+  <div class="card">
+    <div class="kpi-label">Total for {{ "%04d-%02d"|format(year, month) }}</div>
+    <div class="kpi-value">${{ "%.2f"|format(total) }}</div>
+  </div>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <h3>Spend by Category</h3>
+    <canvas id="catChart"></canvas>
+  </div>
+  <div class="card">
+    <h3>Daily Spend</h3>
+    <canvas id="dayChart"></canvas>
+  </div>
+</section>
+
+<section class="card">
+  <h3>Transactions ({{ txs|length }})</h3>
+  <table class="table">
+    <thead>
+      <tr><th>Date</th><th>Merchant</th><th>Category</th><th class="right">Amount</th></tr>
+    </thead>
+    <tbody>
+    {% for t in txs %}
+      <tr>
+        <td>{{ t.date.isoformat() }}</td>
+        <td>{{ t.merchant or "—" }}</td>
+        <td>{{ t.category.name if t.category else "Uncategorized" }}</td>
+        <td class="right">${{ "%.2f"|format(t.amount) }}</td>
+      </tr>
+    {% endfor %}
+    {% if txs|length == 0 %}
+      <tr><td colspan="4" class="muted">No transactions for this month yet.</td></tr>
+    {% endif %}
+    </tbody>
+  </table>
+</section>
+
+<script>
+const labelsCat = {{ labels_cat|tojson }};
+const dataCat = {{ data_cat|tojson }};
+const labelsDays = {{ labels_days|tojson }};
+const dataDays = {{ data_days|tojson }};
+
+new Chart(document.getElementById('catChart'), {
+  type: 'pie',
+  data: { labels: labelsCat, datasets: [{ data: dataCat }] },
+  options: { plugins: { legend: { position: 'bottom' } } }
+});
+
+new Chart(document.getElementById('dayChart'), {
+  type: 'line',
+  data: {
+    labels: labelsDays,
+    datasets: [{ label: 'Daily total', data: dataDays, tension: 0.25 }]
+  },
+  options: {
+    scales: { y: { beginAtZero: true } },
+    plugins: { legend: { display: false } }
+  }
+});
+</script>
+
+{% endblock %}
