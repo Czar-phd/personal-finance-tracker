@@ -138,3 +138,43 @@ def init_db():
             db.session.add(Category(name=n, type="income" if n == "Income" else "expense"))
         db.session.commit()
     return jsonify({"ok": True})
+
+from flask import Response
+
+@bp.get("/transactions.csv")
+def export_transactions_csv():
+    month = request.args.get("month")
+    if not month:
+        return jsonify({"error": "month required as YYYY-MM"}), 400
+    try:
+        y, m = map(int, month.split("-"))
+    except Exception:
+        return jsonify({"error": "bad month format"}), 400
+
+    q = (
+        db.session.query(Transaction)
+        .filter(extract("year", Transaction.date) == y)
+        .filter(extract("month", Transaction.date) == m)
+        .order_by(Transaction.date.asc(), Transaction.id.asc())
+    )
+
+    def esc(s):
+        if s is None:
+            return ""
+        s = str(s).replace('"', '""')
+        return f'"{s}"'
+
+    lines = ["date,merchant,category,amount,currency,notes"]
+    for t in q.all():
+        cat = t.category.name if t.category else ""
+        line = ",".join([
+            t.date.isoformat(),
+            esc(t.merchant),
+            esc(cat),
+            f"{float(t.amount):.2f}",
+            esc(t.currency or "USD"),
+            esc(t.notes),
+        ])
+        lines.append(line)
+    csv = "\n".join(lines) + "\n"
+    return Response(csv, mimetype="text/csv")

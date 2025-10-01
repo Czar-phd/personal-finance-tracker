@@ -101,3 +101,15 @@ def add_transaction():
     y, m = _month_year()
     categories = db.session.query(Category).order_by(Category.type.asc(), Category.name.asc()).all()
     return render_template("add.html", categories=categories, year=y, month=m)
+
+@bp.post("/delete/<int:tx_id>")
+def delete_tx(tx_id: int):
+    t = db.session.get(Transaction, tx_id)
+    if not t:
+        flash("Transaction not found.", "error")
+        return redirect(url_for("web.dashboard"))
+    y, m = t.date.year, t.date.month
+    db.session.delete(t)
+    db.session.commit()
+    flash("Transaction deleted.", "ok")
+    return redirect(url_for("web.dashboard", month=f"{y:04d}-{m:02d}"))
