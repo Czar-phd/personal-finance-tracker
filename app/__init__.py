@@ -3,8 +3,8 @@ from .routes import bp as main_bp
 from .db import db
 
 def create_app():
-    app = Flask(__name__)
-    app.config.update(
+    application = Flask(__name__)
+    application.config.update(
         SECRET_KEY="dev-secret-change-me",
         DEBUG=True,
         TESTING=False,
@@ -12,26 +12,25 @@ def create_app():
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
     )
 
-    db.init_app(app)
+    db.init_app(application)
 
+    # Register SQLAlchemy event listeners (touch updated_at on update)
+    import app.model_events  # noqa: F401
 
-# register SQLAlchemy event listeners (touch updated_at on update)
-import app.model_events  # noqa: F401
-
-    # main JSON route
-    app.register_blueprint(main_bp)
+    # Main JSON route
+    application.register_blueprint(main_bp)
 
     # API (finance) routes
     from .finance.routes import bp as finance_bp
-    app.register_blueprint(finance_bp, url_prefix="/api")
-
-    # CLI commands
-    from .cli.commands import register_cli
-    register_cli(app)
+    application.register_blueprint(finance_bp, url_prefix="/api")
 
     # Web (HTML) dashboard
     from .web import bp as web_bp
-    app.register_blueprint(web_bp)
+    application.register_blueprint(web_bp)
+
+    # CLI commands
+    from .cli.commands import register_cli
+    register_cli(application)
 
     # ---- Flask-Login wiring ----
     from flask_login import LoginManager
@@ -39,10 +38,10 @@ import app.model_events  # noqa: F401
 
     login_manager = LoginManager()
     login_manager.login_view = "main.index"
-    login_manager.init_app(app)
+    login_manager.init_app(application)
 
     @login_manager.user_loader
     def load_user(user_id: str):
         return db.session.get(User, int(user_id))
 
-    return app
+    return application
