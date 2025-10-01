@@ -1,40 +1,26 @@
 import click
+from datetime import date as _date
 from ..db import db
-from ..finance.models import Category
-
-def register_cli(app):
-    @app.cli.command("init-db")
-    def init_db_cmd():
-        """Create tables and seed basic categories."""
-        with app.app_context():
-            db.create_all()
-            if db.session.query(Category).count() == 0:
-                for n in ("Groceries", "Transport", "Coffee", "Shopping", "Income"):
-                    db.session.add(Category(name=n, type="income" if n == "Income" else "expense"))
-                db.session.commit()
-            click.echo("DB initialized and seeded.")
-
-@register_cli
-def _noop(_app=None):  # keeps flake quiet if imported directly
-    pass
+from ..finance.models import Category, Transaction
 
 def _ensure_seed_categories():
-    from ..finance.models import Category
     if db.session.query(Category).count() == 0:
         for n in ("Groceries", "Transport", "Coffee", "Shopping", "Income"):
-            db.session.add(Category(name=n, type="income" if n=="Income" else "expense"))
+            db.session.add(Category(name=n, type="income" if n == "Income" else "expense"))
         db.session.commit()
 
-def _cat_by_name(name):
-    from ..finance.models import Category
+def _cat_by_name(name: str) -> Category | None:
     return db.session.query(Category).filter_by(name=name).first()
 
 def _add_tx(d, amt, merchant, catname):
-    from ..finance.models import Transaction
-    t = Transaction(date=d, amount=amt, merchant=merchant, category_id=_cat_by_name(catname).id)
+    cat = _cat_by_name(catname)
+    if not cat:
+        _ensure_seed_categories()
+        cat = _cat_by_name(catname)
+    t = Transaction(date=d, amount=amt, merchant=merchant, category_id=cat.id)
     db.session.add(t)
 
-def _seed_month(year, month):
+def _seed_month(year: int, month: int):
     from datetime import date
     _ensure_seed_categories()
     samples = [
@@ -64,7 +50,6 @@ def register_cli(app):
     @click.option("--month", help="YYYY-MM (defaults to current month)")
     def seed_demo(month: str | None):
         """Insert sample transactions for charts."""
-        from datetime import date as _date
         with app.app_context():
             if month:
                 y, m = map(int, month.split("-"))
