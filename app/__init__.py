@@ -29,4 +29,16 @@ def create_app():
     from .web import bp as web_bp
     app.register_blueprint(web_bp)
 
+    # ---- Flask-Login wiring ----
+    from flask_login import LoginManager
+    from .auth.models import User
+
+    login_manager = LoginManager()
+    login_manager.login_view = "main.index"
+    login_manager.init_app(app)
+
+    @login_manager.user_loader
+    def load_user(user_id: str):
+        return db.session.get(User, int(user_id))
+
     return app
