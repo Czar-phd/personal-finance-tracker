@@ -12,8 +12,16 @@ def create_app():
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
     )
     db.init_app(app)
+
+    # main blueprint
     app.register_blueprint(main_bp)
 
+    # API blueprints
     from .finance.routes import bp as finance_bp
     app.register_blueprint(finance_bp, url_prefix="/api")
+
+    # CLI commands (THIS is what enables `flask init-db`)
+    from .cli.commands import register_cli
+    register_cli(app)
+
     return app
