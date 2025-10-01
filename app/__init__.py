@@ -14,6 +14,10 @@ def create_app():
 
     db.init_app(app)
 
+
+# register SQLAlchemy event listeners (touch updated_at on update)
+import app.model_events  # noqa: F401
+
     # main JSON route
     app.register_blueprint(main_bp)
 
