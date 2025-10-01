@@ -16,3 +16,15 @@ nav form.inline { margin-left:auto; display:flex; gap:8px; align-items:center; }
 .kpi-value { font-size: 32px; font-weight: 700; }
 .muted { color:var(--muted); }
 @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+
+/* form & flash */
+.form .row { display:flex; gap:12px; align-items:center; margin:10px 0; }
+.form .row label { width:140px; color:var(--muted); }
+.form .row input, .form .row select { flex:1; padding:8px; border:1px solid var(--border); border-radius:8px; background:#fff; }
+.actions { display:flex; gap:10px; margin-top:12px; }
+button { padding:8px 14px; border:1px solid var(--border); background:#f3f5ff; border-radius:10px; cursor:pointer; }
+.btn-secondary { padding:8px 14px; border:1px solid var(--border); border-radius:10px; text-decoration:none; color:#333; background:#f7f7f7; }
+
+.flash { margin:8px 0 12px; }
+.flash-ok { background:#e9f8ee; border:1px solid #bde5c8; padding:8px 12px; border-radius:8px; }
+.flash-error { background:#fdecea; border:1px solid #f5c6cb; padding:8px 12px; border-radius:8px; }

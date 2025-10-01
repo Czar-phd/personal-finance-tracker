@@ -15,7 +15,7 @@
       <a href="{{ url_for('web.dashboard') }}">This Month</a>
       <form class="inline" method="get" action="{{ url_for('web.dashboard') }}">
         <label for="month">Month:</label>
-        <input id="month" name="month" type="month" value="{{ "%04d-%02d"|format(year, month) }}">
+        <input id="month" name="month" type="month" value="{% if year is defined and month is defined %}{{ "%04d-%02d"|format(year, month) }}{% endif %}">
         <button type="submit">Go</button>
       </form>
     </nav>

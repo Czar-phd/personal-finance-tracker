@@ -1,13 +1,15 @@
 from __future__ import annotations
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date
 from calendar import monthrange
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from sqlalchemy import extract
 
 from .db import db
-from .finance.models import Transaction
+from .finance.models import Transaction, Category
+from .finance.services import guess_category_by_merchant
+from dateutil.parser import parse as parse_date
 
 bp = Blueprint("web", __name__, template_folder="templates")
 
@@ -30,17 +32,15 @@ def dashboard():
     )
     txs = q.all()
 
-    # Aggregate: by category (name or 'Uncategorized') and by day
+    # Aggregate totals
     category_totals = defaultdict(float)
     daily_totals = defaultdict(float)
-
     for t in txs:
         cat = t.category.name if t.category else "Uncategorized"
         category_totals[cat] += float(t.amount)
-        day = t.date.day
-        daily_totals[day] += float(t.amount)
+        daily_totals[t.date.day] += float(t.amount)
 
-    # Build arrays for charts
+    # Chart data
     labels_cat = list(category_totals.keys())
     data_cat = [round(category_totals[k], 2) for k in labels_cat]
 
@@ -61,3 +61,43 @@ def dashboard():
         data_days=data_days,
         total=total,
     )
+
+@bp.route("/add", methods=["GET", "POST"])
+def add_transaction():
+    if request.method == "POST":
+        f = request.form
+        date_str = (f.get("date") or "").strip()
+        amount_str = (f.get("amount") or "").strip()
+        merchant = (f.get("merchant") or "").strip() or None
+        notes = (f.get("notes") or "").strip() or None
+        category_id = f.get("category_id") or None
+        try:
+            dt = parse_date(date_str).date()
+            amount = float(amount_str)
+        except Exception:
+            flash("Please provide a valid date (YYYY-MM-DD) and amount.", "error")
+            return redirect(url_for("web.add_transaction"))
+
+        if not category_id:
+            cat = guess_category_by_merchant(merchant)
+            if cat:
+                category_id = cat.id
+
+        t = Transaction(
+            date=dt,
+            amount=amount,
+            merchant=merchant,
+            notes=notes,
+            category_id=int(category_id) if category_id else None,
+            currency="USD",
+            source="manual",
+        )
+        db.session.add(t)
+        db.session.commit()
+        flash("Transaction added.", "ok")
+        return redirect(url_for("web.dashboard", month=f"{dt.year:04d}-{dt.month:02d}"))
+
+    # GET
+    y, m = _month_year()
+    categories = db.session.query(Category).order_by(Category.type.asc(), Category.name.asc()).all()
+    return render_template("add.html", categories=categories, year=y, month=m)
