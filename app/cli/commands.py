@@ -3,20 +3,21 @@ from datetime import date as _date
 from ..db import db
 from ..finance.models import Category, Transaction
 
-def _ensure_seed_categories():
-    if db.session.query(Category).count() == 0:
-        for n in ("Groceries", "Transport", "Coffee", "Shopping", "Income"):
-            db.session.add(Category(name=n, type="income" if n == "Income" else "expense"))
-        db.session.commit()
+def _get_or_create_category(name: str, type_: str = "expense") -> Category:
+    cat = db.session.query(Category).filter_by(name=name).first()
+    if cat:
+        return cat
+    cat = Category(name=name, type=type_)
+    db.session.add(cat)
+    db.session.commit()
+    return cat
 
-def _cat_by_name(name: str) -> Category | None:
-    return db.session.query(Category).filter_by(name=name).first()
+def _ensure_seed_categories():
+    for n in ("Groceries", "Transport", "Coffee", "Shopping", "Income"):
+        _get_or_create_category(n, "income" if n == "Income" else "expense")
 
 def _add_tx(d, amt, merchant, catname):
-    cat = _cat_by_name(catname)
-    if not cat:
-        _ensure_seed_categories()
-        cat = _cat_by_name(catname)
+    cat = _get_or_create_category(catname)
     t = Transaction(date=d, amount=amt, merchant=merchant, category_id=cat.id)
     db.session.add(t)
 
@@ -25,13 +26,13 @@ def _seed_month(year: int, month: int):
     _ensure_seed_categories()
     samples = [
         (1,  4.75, "Starbucks Market", "Coffee"),
-        (2,  62.90,"Safeway",          "Groceries"),
-        (4,  18.20,"Uber Trip",        "Transport"),
-        (7,  12.99,"Amazon",           "Shopping"),
-        (10, 5.25, "Starbucks HQ",     "Coffee"),
-        (15, 32.10,"Whole Foods",      "Groceries"),
-        (20, 21.00,"Uber Trip",        "Transport"),
-        (25, 7.10, "Starbucks Market", "Coffee"),
+        (2,  62.90, "Safeway",          "Groceries"),
+        (4,  18.20, "Uber Trip",        "Transport"),
+        (7,  12.99, "Amazon",           "Shopping"),
+        (10, 5.25,  "Starbucks HQ",     "Coffee"),
+        (15, 32.10, "Whole Foods",      "Groceries"),
+        (20, 21.00, "Uber Trip",        "Transport"),
+        (25, 7.10,  "Starbucks Market", "Coffee"),
     ]
     for day, amt, merchant, cat in samples:
         _add_tx(date(year, month, min(day, 28)), amt, merchant, cat)

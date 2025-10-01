@@ -11,17 +11,22 @@ def create_app():
         SQLALCHEMY_DATABASE_URI="sqlite:///app.sqlite3",
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
     )
+
     db.init_app(app)
 
-    # main blueprint
+    # main JSON route
     app.register_blueprint(main_bp)
 
-    # API blueprints
+    # API (finance) routes
     from .finance.routes import bp as finance_bp
     app.register_blueprint(finance_bp, url_prefix="/api")
 
-    # CLI commands (THIS is what enables `flask init-db`)
+    # CLI commands
     from .cli.commands import register_cli
     register_cli(app)
+
+    # Web (HTML) dashboard
+    from .web import bp as web_bp
+    app.register_blueprint(web_bp)
 
     return app
