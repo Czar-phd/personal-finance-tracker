@@ -25,11 +25,8 @@ def test_create_and_list_transactions_autocat():
     app = setup_app()
     client = app.test_client()
 
-    # count before
-    before = client.get("/api/transactions?month=2025-09").get_json()
-    before_len = len(before)
+    before_len = len(client.get("/api/transactions?month=2025-09").get_json())
 
-    # create one
     r = client.post("/api/transactions", json={
         "date": "2025-09-01",
         "amount": 5.75,
@@ -38,12 +35,9 @@ def test_create_and_list_transactions_autocat():
     })
     assert r.status_code == 201
 
-    # count after
     after = client.get("/api/transactions?month=2025-09").get_json()
     assert len(after) == before_len + 1
-
-    # newest item should be Starbucks + category resolved
-    tx = after[0]  # list is sorted desc by date/id
+    tx = after[0]
     assert tx["merchant"].upper().startswith("STARBUCKS")
     assert tx["category_name"] is not None
 

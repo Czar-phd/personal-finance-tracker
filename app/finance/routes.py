@@ -54,7 +54,7 @@ def list_transactions():
     if month:
         y, m = month.split("-")
         q = q.filter(
-            extract("year", Transaction.date) == int(y),
+            extract("year", Transaction.date) == int(y)
         ).filter(
             extract("month", Transaction.date) == int(m)
         )
