@@ -22,6 +22,8 @@ def _month_year():
     return today.year, today.month
 
 @bp.get("/dashboard")
+from flask_login import login_required
+@login_required
 def dashboard():
     year, month = _month_year()
     q = (

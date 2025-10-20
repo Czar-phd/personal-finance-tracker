@@ -11,7 +11,7 @@ bp = Blueprint("finance", __name__)
 # --------- categories ----------
 @bp.get("/categories")
 def list_categories():
-    q = db.session.query(Category).order_by(Category.name.asc()).all()
+    q = db.session.query(Category).filter_by(user_id=current_user.id).order_by(Category.name.asc()).all()
     return jsonify([{"id": c.id, "name": c.name, "type": c.type} for c in q])
 
 @bp.post("/categories")
