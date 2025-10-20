@@ -1,1 +1,2 @@
 - Next: hook per-user filters into /api endpoints and dashboard totals
+- Next: wire per-user totals on dashboard (aggregate by user_id)
