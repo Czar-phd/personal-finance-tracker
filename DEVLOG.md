@@ -1,0 +1,1 @@
+- Next: hook per-user filters into /api endpoints and dashboard totals
