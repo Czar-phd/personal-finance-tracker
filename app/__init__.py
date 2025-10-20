@@ -27,6 +27,8 @@ def create_app():
     # Web (HTML) dashboard
     from .web import bp as web_bp
     application.register_blueprint(web_bp)
+    from .auth.routes import bp as auth_bp
+    application.register_blueprint(auth_bp)
 
     # CLI commands
     from .cli.commands import register_cli
